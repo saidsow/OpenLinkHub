@@ -95,6 +95,18 @@
                                     </label>
                                 </div>
 
+                                <div class="settings-row">
+                                    <span class="settings-label text-ellipsis">Curve preset</span>
+                                    <label for="curvePreset">
+                                        <select class="form-select system-select auto-width tempProfile" id="curvePreset">
+                                            <option value="" selected>Sensor default</option>
+                                            <option value="silent">Silent</option>
+                                            <option value="balanced">Balanced</option>
+                                            <option value="aggressive">Aggressive</option>
+                                        </select>
+                                    </label>
+                                </div>
+
                                 {{ if .TemperatureProbes }}
                                 <div class="settings-row" id="temperature-probe-data">
                                     <label for="probeData" class="full-width">

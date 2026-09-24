@@ -65,6 +65,7 @@ type Payload struct {
 	HardwareLight                 int                   `json:"hardwareLight"`
 	ZeroRpm                       bool                  `json:"zeroRpm"`
 	Linear                        bool                  `json:"linear"`
+	CurvePreset                   string                `json:"curvePreset"`
 	HwmonDeviceId                 string                `json:"hwmonDeviceId"`
 	HwmonDevice                   string                `json:"hwmonDevice"`
 	TemperatureInputId            string                `json:"temperatureInputId"`
@@ -352,10 +353,19 @@ func ProcessNewTemperatureProfile(r *http.Request) *Payload {
 	sensor := req.Sensor
 	zeroRpm := req.ZeroRpm
 	linear := req.Linear
+	curvePreset := req.CurvePreset
 
 	if static && linear {
 		return &Payload{
 			Message: language.GetValue("txtStaticOrLinear"),
+			Code:    http.StatusOK,
+			Status:  0,
+		}
+	}
+
+	if !temperatures.IsCurvePreset(curvePreset) {
+		return &Payload{
+			Message: language.GetValue("txtUnableToValidateRequest"),
 			Code:    http.StatusOK,
 			Status:  0,
 		}
@@ -494,6 +504,7 @@ func ProcessNewTemperatureProfile(r *http.Request) *Payload {
 		Static:             static,
 		ZeroRpm:            zeroRpm,
 		Linear:             linear,
+		CurvePreset:        curvePreset,
 		Sensor:             sensor,
 		ChannelId:          channelId,
 		HwmonDevice:        hwmonId,

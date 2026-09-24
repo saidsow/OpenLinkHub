@@ -104,11 +104,79 @@ type NewTemperatureProfile struct {
 	Static             bool
 	ZeroRpm            bool
 	Linear             bool
+	CurvePreset        string
 	Sensor             uint8
 	ChannelId          int
 	HwmonDevice        string
 	TemperatureInputId string
 	GpuIndex           uint8
+}
+
+func IsCurvePreset(preset string) bool {
+	switch preset {
+	case "", "silent", "balanced", "aggressive":
+		return true
+	default:
+		return false
+	}
+}
+
+func curvePresetProfile(sensor uint8, preset string) TemperatureProfileData {
+	var temperatures []float32
+	var fanSpeeds []float32
+	var pumpSpeeds []float32
+
+	if sensor == SensorTypeLiquidTemperature {
+		temperatures = []float32{20, 30, 40, 50, 60}
+		switch preset {
+		case "silent":
+			fanSpeeds = []float32{25, 35, 55, 80, 100}
+			pumpSpeeds = []float32{50, 50, 60, 80, 100}
+		case "balanced":
+			fanSpeeds = []float32{30, 45, 65, 90, 100}
+			pumpSpeeds = []float32{60, 60, 70, 90, 100}
+		case "aggressive":
+			fanSpeeds = []float32{40, 60, 80, 100, 100}
+			pumpSpeeds = []float32{70, 70, 85, 100, 100}
+		}
+	} else {
+		temperatures = []float32{30, 45, 60, 75, 85}
+		switch preset {
+		case "silent":
+			fanSpeeds = []float32{25, 35, 55, 80, 100}
+			pumpSpeeds = []float32{50, 50, 60, 80, 100}
+		case "balanced":
+			fanSpeeds = []float32{30, 45, 65, 90, 100}
+			pumpSpeeds = []float32{60, 60, 70, 90, 100}
+		case "aggressive":
+			fanSpeeds = []float32{40, 60, 80, 100, 100}
+			pumpSpeeds = []float32{70, 70, 85, 100, 100}
+		}
+	}
+
+	profiles := make([]TemperatureProfile, 0, len(temperatures))
+	pump := make([]Point, 0, len(temperatures))
+	fans := make([]Point, 0, len(temperatures))
+	for index, temperature := range temperatures {
+		maximum := float32(200)
+		if index+1 < len(temperatures) {
+			maximum = temperatures[index+1]
+		} else if sensor == SensorTypeLiquidTemperature {
+			maximum = 60
+		}
+		profiles = append(profiles, TemperatureProfile{Id: index + 1, Min: temperature, Max: maximum, Fans: uint16(fanSpeeds[index]), Pump: uint16(pumpSpeeds[index])})
+		pump = append(pump, Point{X: temperature, Y: pumpSpeeds[index]})
+		fans = append(fans, Point{X: temperature, Y: fanSpeeds[index]})
+	}
+
+	return TemperatureProfileData{
+		Sensor:   sensor,
+		Profiles: profiles,
+		Points: map[uint8][]Point{
+			0: pump,
+			1: fans,
+		},
+	}
 }
 
 var (
@@ -501,6 +569,10 @@ func AddTemperatureProfile(newTemperatureProfile *NewTemperatureProfile) bool {
 				pf = profilePsu
 				newTemperatureProfile.ZeroRpm = true
 			}
+		}
+
+		if newTemperatureProfile.CurvePreset != "" {
+			pf = curvePresetProfile(newTemperatureProfile.Sensor, newTemperatureProfile.CurvePreset)
 		}
 
 		if len(newTemperatureProfile.DeviceId) > 0 {

@@ -81,12 +81,14 @@ $(document).ready(function () {
         const staticMode = $('#staticCheckbox').is(':checked');
         const zeroRpmMode = $('#zeroRpmCheckbox').is(':checked');
         const linear = $('#linearCheckbox').is(':checked');
+        const curvePreset = $('#curvePreset').val() || '';
 
         const pf = {};
         pf["profile"] = profile;
         pf["static"] = staticMode;
         pf["zeroRpm"] = zeroRpmMode;
         pf["linear"] = linear;
+        pf["curvePreset"] = curvePreset;
         pf["sensor"] = parseInt(sensor);
         if (parseInt(sensor) === 3) {
             pf["hwmonDeviceId"] = $("#hwmonDeviceId").val();
